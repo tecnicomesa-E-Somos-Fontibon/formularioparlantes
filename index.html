@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Implementación Audio — SIRCI Recaudo</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #273549;
+      --border: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.15);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.15);
+      --gray-bg: rgba(148, 163, 184, 0.14);
+      --red: #ef4444;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 40px; }
+
+    /* Header */
+    .topbar {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 30;
+      padding: 14px 16px;
+    }
+    .topbar-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .brand h1 { font-size: 1.08rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .cloud-pill {
+      font-size: 0.75rem; font-weight: 600; padding: 6px 10px; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+    .dot.online { background: var(--green); }
+    .dot.error { background: var(--red); }
+
+    .btn {
+      border: none; border-radius: 10px; padding: 9px 14px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
+      color: var(--text); background: var(--surface-2); border: 1px solid var(--border);
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .btn-sm { padding: 6px 10px; font-size: 0.78rem; border-radius: 8px; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+    /* Banner aviso modo local */
+    .notice {
+      background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fde68a; border-radius: var(--radius); padding: 10px 14px;
+      font-size: 0.82rem; margin-bottom: 14px; display: none;
+    }
+
+    /* Progress & stats */
+    .summary-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px; margin-bottom: 14px;
+    }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; }
+    .progress-track { width: 100%; height: 9px; background: var(--bg); border-radius: 999px; overflow: hidden; display: flex; }
+    .progress-done { background: var(--green); height: 100%; transition: width 0.3s ease; }
+    .progress-prog { background: var(--amber); height: 100%; transition: width 0.3s ease; }
+
+    /* Controls */
+    .controls {
+      display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
+      position: sticky; top: 67px; z-index: 20;
+      background: var(--bg); padding: 8px 0 10px;
+    }
+    .search-box { position: relative; }
+    .search-box input {
+      width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 12px 40px 12px 14px; border-radius: var(--radius); font-size: 0.95rem; outline: none;
+    }
+    .search-box input:focus { border-color: var(--primary); }
+    .clear-search {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: transparent; border: none; color: var(--muted); font-size: 1.2rem;
+      cursor: pointer; padding: 4px 8px; display: none;
+    }
+
+    .filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+    .filter-pill {
+      white-space: nowrap; background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); padding: 8px 13px; border-radius: 999px; font-size: 0.82rem;
+      font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+    }
+    .filter-pill.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .filter-pill span { opacity: 0.85; font-weight: 500; margin-left: 4px; }
+
+    /* Bus Grid */
+    .bus-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 10px;
+    }
+    .bus-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 13px; cursor: pointer; transition: border-color 0.15s ease, transform 0.1s ease;
+      display: flex; flex-direction: column; gap: 8px; position: relative;
+    }
+    .bus-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+    .bus-card.completado { border-left: 4px solid var(--green); }
+    .bus-card.en_proceso { border-left: 4px solid var(--amber); }
+    .bus-card.pendiente { border-left: 4px solid #475569; }
+
+    .bus-card-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .bus-id { font-size: 1rem; font-weight: 700; letter-spacing: 0.01em; }
+    .badge {
+      font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .badge.pendiente { background: var(--gray-bg); color: var(--muted); }
+    .badge.en_proceso { background: var(--amber-bg); color: var(--amber); }
+    .badge.completado { background: var(--green-bg); color: var(--green); }
+
+    .bus-meta { font-size: 0.76rem; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+    .photo-tags { display: flex; gap: 6px; margin-top: 2px; font-size: 0.72rem; }
+    .photo-tag { background: var(--bg); padding: 2px 6px; border-radius: 6px; color: #cbd5e1; }
+
+    .empty-state {
+      grid-column: 1 / -1; text-align: center; padding: 40px 16px; color: var(--muted);
+      background: var(--surface); border-radius: var(--radius); border: 1px dashed var(--border);
+    }
+
+    /* Form View */
+    #formView { display: none; max-width: 760px; margin: 0 auto; }
+    .form-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .form-title-group { display: flex; align-items: center; gap: 10px; }
+    .form-title-group h2 { font-size: 1.35rem; font-weight: 800; }
+
+    .section-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 0.92rem; font-weight: 700; color: #cbd5e1; margin-bottom: 14px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+    .input-row { display: flex; gap: 8px; align-items: center; }
+
+    input[type="date"], input[type="time"], textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 11px 12px; border-radius: 10px; font-size: 0.95rem; outline: none;
+    }
+    input[type="date"]:focus, input[type="time"]:focus, textarea:focus { border-color: var(--primary); }
+    textarea { min-height: 92px; resize: vertical; line-height: 1.4; }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
+
+    /* Photo picker */
+    .photo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .hidden-input { display: none; }
+
+    .photo-preview-box {
+      background: var(--bg); border: 1px dashed var(--border); border-radius: 10px;
+      min-height: 110px; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; padding: 10px; text-align: center; position: relative;
+    }
+    .photo-preview-box img {
+      max-width: 100%; max-height: 260px; border-radius: 8px; object-fit: contain; cursor: zoom-in;
+    }
+    .photo-placeholder { font-size: 0.8rem; color: var(--muted); }
+    .photo-toolbar {
+      display: flex; gap: 8px; margin-top: 10px; width: 100%; justify-content: center;
+    }
+
+    .form-footer {
+      display: flex; flex-direction: column; gap: 10px; margin-top: 8px;
+    }
+    .btn-save { padding: 14px; font-size: 1rem; width: 100%; }
+    .last-update { text-align: center; font-size: 0.78rem; color: var(--muted); }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 100;
+      display: none; align-items: center; justify-content: center; flex-direction: column; padding: 16px; gap: 12px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 96vw; max-height: 82vh; border-radius: 8px; object-fit: contain; }
+    .lightbox-actions { display: flex; gap: 10px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(90px);
+      background: #0b1220; border: 1px solid var(--border); color: var(--text);
+      padding: 11px 18px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45); z-index: 90; transition: transform 0.25s ease;
+      max-width: 92vw; text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Spinner */
+    .spinner {
+      width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 520px) {
+      .bus-grid { grid-template-columns: repeat(2, 1fr); }
+      .controls { top: 82px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>Implementación Audio — SIRCI Recaudo</h1>
+        <p>Flota Z66-7001 a Z66-7126 (126 buses)</p>
+      </div>
+      <div class="header-actions">
+        <div class="cloud-pill" id="cloudPill">
+          <span class="dot" id="cloudDot"></span>
+          <span id="cloudText">Conectando...</span>
+        </div>
+        <button class="btn btn-sm" id="btnSync" onclick="syncFromCloud(true)" title="Actualizar desde la nube">↻ Actualizar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="notice" id="localNotice">
+      ⚠️ <strong>Modo Local de prueba:</strong> Pega la URL de tu Google Apps Script en la constante <code>SCRIPT_URL</code> del código para activar la sincronización en la nube entre dispositivos.
+    </div>
+
+    <!-- VISTA PRINCIPAL: LISTA DE 126 BUSES -->
+    <section id="listView">
+      <div class="summary-card">
+        <div class="progress-header">
+          <strong>Avance de implementación</strong>
+          <span id="progressText">0 / 126 completados (0%)</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-done" id="barDone" style="width: 0%"></div>
+          <div class="progress-prog" id="barProg" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Buscar bus (ej. 7045, 45 o Z66-7045)..." autocomplete="off" />
+          <button class="clear-search" id="clearSearch" aria-label="Limpiar búsqueda">&times;</button>
+        </div>
+        <div class="filters">
+          <button class="filter-pill active" data-filter="todos">Todos <span id="cntTodos">(126)</span></button>
+          <button class="filter-pill" data-filter="pendiente">Pendientes <span id="cntPend">(126)</span></button>
+          <button class="filter-pill" data-filter="en_proceso">En proceso <span id="cntProc">(0)</span></button>
+          <button class="filter-pill" data-filter="completado">Completados <span id="cntComp">(0)</span></button>
+        </div>
+      </div>
+
+      <div class="bus-grid" id="busGrid"></div>
+    </section>
+
+    <!-- VISTA FORMULARIO DEL BUS -->
+    <section id="formView">
+      <div class="form-header">
+        <button class="btn" onclick="closeForm()">← Volver a la lista</button>
+        <div class="form-title-group">
+          <h2 id="formBusTitle">Z66-7001</h2>
+          <span class="badge pendiente" id="formStatusBadge">Pendiente</span>
+        </div>
+      </div>
+
+      <!-- RECEPCIÓN / INICIO -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>1. Estado Inicial (Recepción)</span>
+        </div>
+
+        <div class="field">
+          <label for="inputFecha">Fecha de la intervención</label>
+          <div class="input-row">
+            <input type="date" id="inputFecha" />
+            <button type="button" class="btn btn-sm" onclick="setToday()">Hoy</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="inputDescInicial">Descripción inicial del estado del bus</label>
+          <textarea id="inputDescInicial" placeholder="Describe cómo se entrega el bus a SIRCI Recaudo (cableado, consola, parlantes, novedades previas)..."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Foto inicial</label>
+          <div class="photo-actions">
+            <button type="button" class="btn" onclick="document.getElementById('camInicial').click()">📷 Tomar foto</button>
+            <button type="button" class="btn" onclick="document.getElementById('galInicial').click()">🖼️ Galería / Archivo</button>
+          </div>
+          <input type="file" id="camInicial" class="hidden-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(event, 'inicial')" />
+          <input type="file" id="galInicial" class="hidden-input" accept="image/*" onchange="handlePhotoSelect(event, 'inicial')" />
+
+          <div class="photo-preview-box" id="previewBoxInicial">
+            <span class="photo-placeholder">Sin foto inicial cargada</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CIERRE / FINALIZACIÓN -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>2. Cierre e Inspección Final</span>
+        </div>
+
+        <div class="field">
+          <label for="inputHoraFin">Hora de finalización</label>
+          <div class="input-row">
+            <input type="time" id="inputHoraFin" />
+            <button type="button" class="btn btn-sm" onclick="setNowTime()">Ahora</button>
+          </div>
+          <p class="hint">Al registrar la hora de finalización el bus pasa automáticamente a <strong>Completado</strong>.</p>
+        </div>
+
+        <div class="field">
+          <label for="inputDescFinal">Descripción final</label>
+          <textarea id="inputDescFinal" placeholder="Resultado de pruebas de audio, novedades al finalizar, observaciones de entrega..."></textarea>
+        </div>
+
+        <div class="field">
+          <label>Foto final</label>
+          <div class="photo-actions">
+            <button type="button" class="btn" onclick="document.getElementById('camFinal').click()">📷 Tomar foto</button>
+            <button type="button" class="btn" onclick="document.getElementById('galFinal').click()">🖼️ Galería / Archivo</button>
+          </div>
+          <input type="file" id="camFinal" class="hidden-input" accept="image/*" capture="environment" onchange="handlePhotoSelect(event, 'final')" />
+          <input type="file" id="galFinal" class="hidden-input" accept="image/*" onchange="handlePhotoSelect(event, 'final')" />
+
+          <div class="photo-preview-box" id="previewBoxFinal">
+            <span class="photo-placeholder">Sin foto final cargada</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-primary btn-save" id="btnSave" onclick="saveCurrentBus()">
+          💾 Guardar registro en la nube
+        </button>
+        <div class="last-update" id="lastUpdateText"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- VISOR DE IMAGEN AMPLIADA -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+    <img id="lightboxImg" src="" alt="Evidencia fotográfica" />
+    <div class="lightbox-actions">
+      <a id="lightboxDriveLink" href="#" target="_blank" rel="noopener" class="btn btn-sm" style="display:none; text-decoration:none;">Abrir en Google Drive ↗</a>
+      <button class="btn btn-sm btn-primary" onclick="closeLightbox()">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // =========================================================================
+    // CONFIGURACIÓN: Pega aquí la URL de tu aplicación web de Google Apps Script
+    // =========================================================================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpBq_gZv1SJA--4RgrJXIule-4WKllMmneYVwMt2667-5_XJPYD_rczzI_HXs2UJxEJw/exec';
+
+    const STORAGE_KEY = 'sirci_audio_buses_cache_v1';
+    const BUSES = Array.from({ length: 126 }, (_, i) => `Z66-${7001 + i}`);
+
+    let records = {};
+    let currentFilter = 'todos';
+    let currentSearch = '';
+    let activeBus = null;
+
+    // Estado temporal de fotos mientras se edita un bus
+    let draftPhotos = {
+      inicialBase64: null,
+      borrarInicial: false,
+      finalBase64: null,
+      borrarFinal: false
+    };
+
+    const isCloudConfigured = () => SCRIPT_URL && SCRIPT_URL.startsWith('https://script.google.com/');
+
+    // ---------- Utilidades ----------
+    function showToast(msg, ms = 2800) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.remove('show'), ms);
+    }
+
+    function setCloudStatus(state, text) {
+      const dot = document.getElementById('cloudDot');
+      const label = document.getElementById('cloudText');
+      dot.className = 'dot ' + (state === 'online' ? 'online' : state === 'error' ? 'error' : '');
+      label.textContent = text;
+    }
+
+    function getDriveThumb(fileId) {
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+    }
+
+    function getDriveView(fileId) {
+      return `https://drive.google.com/file/d/${fileId}/view`;
+    }
+
+    function computeStatus(rec) {
+      if (!rec) return 'pendiente';
+      if ((rec.horaFin || '').trim()) return 'completado';
+      if (
+        (rec.fecha || '').trim() ||
+        (rec.descInicial || '').trim() ||
+        (rec.fotoInicialId || '').trim() ||
+        (rec.fotoInicialLocal || '').trim() ||
+        (rec.descFinal || '').trim() ||
+        (rec.fotoFinalId || '').trim() ||
+        (rec.fotoFinalLocal || '').trim()
+      ) {
+        return 'en_proceso';
+      }
+      return 'pendiente';
+    }
+
+    function statusLabel(st) {
+      if (st === 'completado') return 'Completado';
+      if (st === 'en_proceso') return 'En proceso';
+      return 'Pendiente';
+    }
+
+    function saveCache() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch (_) {}
+    }
+
+    function loadCache() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) records = JSON.parse(raw) || {};
+      } catch (_) { records = {}; }
+    }
+
+    // ---------- Sincronización en la nube ----------
+    async function syncFromCloud(showFeedback = false) {
+      if (!isCloudConfigured()) {
+        document.getElementById('localNotice').style.display = 'block';
+        setCloudStatus('local', 'Modo Local');
+        renderList();
+        return;
+      }
+
+      const btn = document.getElementById('btnSync');
+      btn.disabled = true;
+      setCloudStatus('loading', 'Sincronizando...');
+
+      try {
+        const res = await fetch(SCRIPT_URL + '?t=' + Date.now(), { method: 'GET' });
+        const json = await res.json();
+        if (json.status === 'ok' && json.data) {
+          records = json.data;
+          saveCache();
+          setCloudStatus('online', 'En la nube');
+          renderList();
+          if (showFeedback) showToast('Datos actualizados desde la nube');
+        } else {
+          throw new Error(json.message || 'Error leyendo datos');
+        }
+      } catch (err) {
+        console.error(err);
+        setCloudStatus('error', 'Sin conexión');
+        if (showFeedback) showToast('No se pudo conectar con la nube', 3500);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ---------- Render lista principal ----------
+    function renderList() {
+      let cPend = 0, cProc = 0, cComp = 0;
+
+      const items = BUSES.map(bus => {
+        const rec = records[bus] || {};
+        const st = computeStatus(rec);
+        if (st === 'completado') cComp++;
+        else if (st === 'en_proceso') cProc++;
+        else cPend++;
+        return { bus, rec, st };
+      });
+
+      // Actualizar contadores y barra
+      document.getElementById('cntTodos').textContent = `(${BUSES.length})`;
+      document.getElementById('cntPend').textContent = `(${cPend})`;
+      document.getElementById('cntProc').textContent = `(${cProc})`;
+      document.getElementById('cntComp').textContent = `(${cComp})`;
+
+      const pctDone = Math.round((cComp / BUSES.length) * 100);
+      const pctProg = Math.round((cProc / BUSES.length) * 100);
+      document.getElementById('progressText').textContent = `${cComp} / ${BUSES.length} completados (${pctDone}%)`;
+      document.getElementById('barDone').style.width = pctDone + '%';
+      document.getElementById('barProg').style.width = pctProg + '%';
+
+      // Filtrar
+      const q = currentSearch.trim().toLowerCase();
+      const filtered = items.filter(({ bus, st }) => {
+        if (currentFilter !== 'todos' && st !== currentFilter) return false;
+        if (q && !bus.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      const grid = document.getElementById('busGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state">No se encontraron buses con ese filtro o búsqueda.</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(({ bus, rec, st }) => {
+        const hasIniPhoto = Boolean(rec.fotoInicialId || rec.fotoInicialLocal);
+        const hasFinPhoto = Boolean(rec.fotoFinalId || rec.fotoFinalLocal);
+        return `
+          <div class="bus-card ${st}" onclick="openBus('${bus}')">
+            <div class="bus-card-top">
+              <span class="bus-id">${bus}</span>
+              <span class="badge ${st}">${statusLabel(st)}</span>
+            </div>
+            <div class="bus-meta">
+              <span>📅 ${rec.fecha || 'Sin fecha'}</span>
+              <span>🕒 ${rec.horaFin ? 'Fin: ' + rec.horaFin : (st === 'en_proceso' ? 'Pendiente cierre' : 'Sin iniciar')}</span>
+              ${(hasIniPhoto || hasFinPhoto) ? `
+                <div class="photo-tags">
+                  ${hasIniPhoto ? '<span class="photo-tag">📷 Inicial</span>' : ''}
+                  ${hasFinPhoto ? '<span class="photo-tag">📷 Final</span>' : ''}
+                </div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ---------- Formulario de Bus ----------
+    function openBus(bus) {
+      activeBus = bus;
+      const rec = records[bus] || {};
+      draftPhotos = { inicialBase64: null, borrarInicial: false, finalBase64: null, borrarFinal: false };
+
+      document.getElementById('formBusTitle').textContent = bus;
+      document.getElementById('inputFecha').value = rec.fecha || '';
+      document.getElementById('inputDescInicial').value = rec.descInicial || '';
+      document.getElementById('inputHoraFin').value = rec.horaFin || '';
+      document.getElementById('inputDescFinal').value = rec.descFinal || '';
+      document.getElementById('lastUpdateText').textContent = rec.ultimaActualizacion
+        ? `Última actualización: ${rec.ultimaActualizacion}`
+        : 'Sin registros previos';
+
+      renderPhotoPreview('inicial');
+      renderPhotoPreview('final');
+      updateLiveFormBadge();
+
+      document.getElementById('listView').style.display = 'none';
+      document.getElementById('formView').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    function closeForm() {
+      activeBus = null;
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('listView').style.display = 'block';
+      renderList();
+    }
+
+    function updateLiveFormBadge() {
+      const rec = records[activeBus] || {};
+      const simulated = {
+        fecha: document.getElementById('inputFecha').value,
+        descInicial: document.getElementById('inputDescInicial').value,
+        horaFin: document.getElementById('inputHoraFin').value,
+        descFinal: document.getElementById('inputDescFinal').value,
+        fotoInicialId: draftPhotos.borrarInicial ? '' : (draftPhotos.inicialBase64 || rec.fotoInicialId || rec.fotoInicialLocal || ''),
+        fotoFinalId: draftPhotos.borrarFinal ? '' : (draftPhotos.finalBase64 || rec.fotoFinalId || rec.fotoFinalLocal || '')
+      };
+      const st = computeStatus(simulated);
+      const badge = document.getElementById('formStatusBadge');
+      badge.className = 'badge ' + st;
+      badge.textContent = statusLabel(st);
+    }
+
+    function setToday() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      document.getElementById('inputFecha').value = `${yyyy}-${mm}-${dd}`;
+      updateLiveFormBadge();
+    }
+
+    function setNowTime() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mi = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('inputHoraFin').value = `${hh}:${mi}`;
+      updateLiveFormBadge();
+    }
+
+    // ---------- Compresión y vista previa de fotos ----------
+    function compressImage(file, maxWidth = 1280, quality = 0.75) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            let w = img.width;
+            let h = img.height;
+            if (w > maxWidth) {
+              h = Math.round((h * maxWidth) / w);
+              w = maxWidth;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handlePhotoSelect(event, tipo) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      const box = document.getElementById(tipo === 'inicial' ? 'previewBoxInicial' : 'previewBoxFinal');
+      box.innerHTML = `<span class="photo-placeholder">Optimizando imagen...</span>`;
+
+      try {
+        const compressed = await compressImage(file);
+        if (tipo === 'inicial') {
+          draftPhotos.inicialBase64 = compressed;
+          draftPhotos.borrarInicial = false;
+        } else {
+          draftPhotos.finalBase64 = compressed;
+          draftPhotos.borrarFinal = false;
+        }
+        renderPhotoPreview(tipo);
+        updateLiveFormBadge();
+      } catch (err) {
+        console.error(err);
+        showToast('Error al procesar la imagen');
+        renderPhotoPreview(tipo);
+      }
+    }
+
+    function removePhoto(tipo) {
+      if (tipo === 'inicial') {
+        draftPhotos.inicialBase64 = null;
+        draftPhotos.borrarInicial = true;
+      } else {
+        draftPhotos.finalBase64 = null;
+        draftPhotos.borrarFinal = true;
+      }
+      renderPhotoPreview(tipo);
+      updateLiveFormBadge();
+    }
+
+    function renderPhotoPreview(tipo) {
+      const rec = records[activeBus] || {};
+      const box = document.getElementById(tipo === 'inicial' ? 'previewBoxInicial' : 'previewBoxFinal');
+
+      let imgSrc = '';
+      let driveUrl = '';
+
+      if (tipo === 'inicial') {
+        if (draftPhotos.inicialBase64) {
+          imgSrc = draftPhotos.inicialBase64;
+        } else if (!draftPhotos.borrarInicial) {
+          if (rec.fotoInicialId) {
+            imgSrc = getDriveThumb(rec.fotoInicialId);
+            driveUrl = getDriveView(rec.fotoInicialId);
+          } else if (rec.fotoInicialLocal) {
+            imgSrc = rec.fotoInicialLocal;
+          }
+        }
+      } else {
+        if (draftPhotos.finalBase64) {
+          imgSrc = draftPhotos.finalBase64;
+        } else if (!draftPhotos.borrarFinal) {
+          if (rec.fotoFinalId) {
+            imgSrc = getDriveThumb(rec.fotoFinalId);
+            driveUrl = getDriveView(rec.fotoFinalId);
+          } else if (rec.fotoFinalLocal) {
+            imgSrc = rec.fotoFinalLocal;
+          }
+        }
+      }
+
+      if (!imgSrc) {
+        box.innerHTML = `<span class="photo-placeholder">Sin foto ${tipo} cargada</span>`;
+        return;
+      }
+
+      box.innerHTML = `
+        <img src="${imgSrc}" alt="Foto ${tipo}" onclick="openLightbox('${imgSrc}', '${driveUrl}')" />
+        <div class="photo-toolbar">
+          <button type="button" class="btn btn-sm" onclick="openLightbox('${imgSrc}', '${driveUrl}')">🔍 Ver grande</button>
+          <button type="button" class="btn btn-sm btn-danger" onclick="removePhoto('${tipo}')">🗑 Quitar</button>
+        </div>
+      `;
+    }
+
+    function openLightbox(src, driveUrl) {
+      document.getElementById('lightboxImg').src = src;
+      const link = document.getElementById('lightboxDriveLink');
+      if (driveUrl) {
+        link.href = driveUrl;
+        link.style.display = 'inline-flex';
+      } else {
+        link.style.display = 'none';
+      }
+      document.getElementById('lightbox').classList.add('open');
+    }
+
+    function closeLightbox(e) {
+      if (!e || e.target.id === 'lightbox') {
+        document.getElementById('lightbox').classList.remove('open');
+      }
+    }
+
+    // ---------- Guardar registro ----------
+    async function saveCurrentBus() {
+      if (!activeBus) return;
+      const btn = document.getElementById('btnSave');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> Guardando...`;
+
+      const payload = {
+        bus: activeBus,
+        fecha: document.getElementById('inputFecha').value,
+        descInicial: document.getElementById('inputDescInicial').value.trim(),
+        horaFin: document.getElementById('inputHoraFin').value,
+        descFinal: document.getElementById('inputDescFinal').value.trim(),
+        fotoInicialBase64: draftPhotos.inicialBase64,
+        borrarFotoInicial: draftPhotos.borrarInicial,
+        fotoFinalBase64: draftPhotos.finalBase64,
+        borrarFotoFinal: draftPhotos.borrarFinal
+      };
+
+      // Modo Local si aún no se pega la URL de Apps Script
+      if (!isCloudConfigured()) {
+        const prev = records[activeBus] || {};
+        const nowStr = new Date().toLocaleString('es-CO');
+        const newRec = {
+          bus: activeBus,
+          fecha: payload.fecha,
+          descInicial: payload.descInicial,
+          horaFin: payload.horaFin,
+          descFinal: payload.descFinal,
+          fotoInicialLocal: payload.borrarFotoInicial ? '' : (payload.fotoInicialBase64 || prev.fotoInicialLocal || ''),
+          fotoFinalLocal: payload.borrarFotoFinal ? '' : (payload.fotoFinalBase64 || prev.fotoFinalLocal || ''),
+          ultimaActualizacion: nowStr + ' (Local)'
+        };
+        newRec.estado = computeStatus(newRec);
+        records[activeBus] = newRec;
+        saveCache();
+        btn.disabled = false;
+        btn.innerHTML = '💾 Guardar registro en la nube';
+        showToast(`${activeBus} guardado en modo local`);
+        closeForm();
+        return;
+      }
+
+      // Guardado en Google Apps Script (sin preflight CORS usando text/plain)
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.status === 'ok' && json.record) {
+          records[activeBus] = json.record;
+          saveCache();
+          setCloudStatus('online', 'En la nube');
+          showToast(`✅ ${activeBus} guardado y sincronizado`);
+          closeForm();
+        } else {
+          throw new Error(json.message || 'Error guardando en la nube');
+        }
+      } catch (err) {
+        console.error(err);
+        setCloudStatus('error', 'Error al guardar');
+        showToast('❌ Error al guardar. Revisa tu conexión e intenta de nuevo.', 4000);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '💾 Guardar registro en la nube';
+      }
+    }
+
+    // ---------- Eventos de búsqueda, filtros e inicialización ----------
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = e.target.value;
+      clearSearch.style.display = currentSearch ? 'block' : 'none';
+      renderList();
+    });
+
+    clearSearch.addEventListener('click', () => {
+      currentSearch = '';
+      searchInput.value = '';
+      clearSearch.style.display = 'none';
+      searchInput.focus();
+      renderList();
+    });
+
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentFilter = pill.dataset.filter;
+        renderList();
+      });
+    });
+
+    ['inputFecha', 'inputDescInicial', 'inputHoraFin', 'inputDescFinal'].forEach(id => {
+      document.getElementById(id).addEventListener('input', updateLiveFormBadge);
+    });
+
+    // Al volver a la pestaña en el celular/PC, sincroniza automáticamente si estás en la lista
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !activeBus && isCloudConfigured()) {
+        syncFromCloud(false);
+      }
+    });
+
+    // Arranque
+    loadCache();
+    renderList();
+    syncFromCloud(false);
+  </script>
+</body>
+</html>
