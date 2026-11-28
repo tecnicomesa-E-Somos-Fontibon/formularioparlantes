@@ -14,6 +14,7 @@
       --muted: #94a3b8;
       --primary: #3b82f6;
       --primary-hover: #2563eb;
+      --blue-bg: rgba(59, 130, 246, 0.16);
       --green: #10b981;
       --green-bg: rgba(16, 185, 129, 0.15);
       --amber: #f59e0b;
@@ -66,7 +67,6 @@
 
     .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
 
-    /* Banner aviso modo local */
     .notice {
       background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35);
       color: #fde68a; border-radius: var(--radius); padding: 10px 14px;
@@ -78,12 +78,34 @@
       background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
       padding: 14px 16px; margin-bottom: 14px;
     }
-    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.85rem; }
-    .progress-track { width: 100%; height: 9px; background: var(--bg); border-radius: 999px; overflow: hidden; display: flex; }
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 9px; font-size: 0.85rem; flex-wrap: wrap; gap: 6px;
+    }
+    .progress-track {
+      position: relative; width: 100%; height: 11px; background: var(--bg);
+      border-radius: 999px; overflow: hidden; display: flex;
+    }
     .progress-done { background: var(--green); height: 100%; transition: width 0.3s ease; }
     .progress-prog { background: var(--amber); height: 100%; transition: width 0.3s ease; }
+    .progress-vol {
+      position: absolute; left: 0; top: 0; height: 100%;
+      background: var(--primary); border-radius: 999px;
+      transition: width 0.3s ease; z-index: 2;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.45);
+    }
 
-    /* Controls */
+    .progress-legend {
+      display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px;
+      font-size: 0.78rem; color: var(--muted);
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .legend-dot.green { background: var(--green); }
+    .legend-dot.blue { background: var(--primary); }
+    .legend-dot.amber { background: var(--amber); }
+
+    /* Controls & filters */
     .controls {
       display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
       position: sticky; top: 67px; z-index: 20;
@@ -110,10 +132,43 @@
     .filter-pill.active { background: var(--primary); border-color: var(--primary); color: #fff; }
     .filter-pill span { opacity: 0.85; font-weight: 500; margin-left: 4px; }
 
+    .advanced-filters {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 12px;
+    }
+    .filter-group {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .filter-group-label {
+      font-size: 0.76rem; font-weight: 700; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.03em; margin-right: 2px;
+    }
+    .vol-pill {
+      background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+      padding: 6px 11px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .vol-pill.active { background: var(--blue-bg); border-color: var(--primary); color: #93c5fd; }
+
+    .date-filter-input {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      padding: 6px 10px; border-radius: 8px; font-size: 0.82rem; outline: none;
+    }
+    .date-filter-input:focus { border-color: var(--primary); }
+    .btn-today-filter.active {
+      background: var(--primary); border-color: var(--primary); color: #fff;
+    }
+
+    .active-results-bar {
+      display: none; align-items: center; justify-content: space-between;
+      font-size: 0.8rem; color: var(--muted); padding: 2px 2px 0;
+    }
+
     /* Bus Grid */
     .bus-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
       gap: 10px;
     }
     .bus-card {
@@ -125,20 +180,26 @@
     .bus-card.completado { border-left: 4px solid var(--green); }
     .bus-card.en_proceso { border-left: 4px solid var(--amber); }
     .bus-card.pendiente { border-left: 4px solid #475569; }
+    .bus-card.has-volume { border-left: 4px solid var(--primary); }
 
     .bus-card-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .bus-id { font-size: 1rem; font-weight: 700; letter-spacing: 0.01em; }
+    .bus-id { font-size: 0.96rem; font-weight: 700; letter-spacing: 0.01em; white-space: nowrap; }
     .badge {
-      font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 999px;
-      text-transform: uppercase; letter-spacing: 0.03em;
+      font-size: 0.65rem; font-weight: 700; padding: 3px 7px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap;
     }
     .badge.pendiente { background: var(--gray-bg); color: var(--muted); }
     .badge.en_proceso { background: var(--amber-bg); color: var(--amber); }
     .badge.completado { background: var(--green-bg); color: var(--green); }
 
     .bus-meta { font-size: 0.76rem; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
-    .photo-tags { display: flex; gap: 6px; margin-top: 2px; font-size: 0.72rem; }
+    .photo-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; font-size: 0.7rem; }
     .photo-tag { background: var(--bg); padding: 2px 6px; border-radius: 6px; color: #cbd5e1; }
+    .vol-tag {
+      background: var(--blue-bg); border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd; padding: 2px 7px; border-radius: 6px; font-weight: 600;
+    }
+    .dur-tag { color: #a7f3d0; font-weight: 600; }
 
     .empty-state {
       grid-column: 1 / -1; text-align: center; padding: 40px 16px; color: var(--muted);
@@ -168,6 +229,7 @@
     .field:last-child { margin-bottom: 0; }
     .field label { display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
     .input-row { display: flex; gap: 8px; align-items: center; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
 
     input[type="date"], input[type="time"], textarea {
       width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
@@ -176,6 +238,30 @@
     input[type="date"]:focus, input[type="time"]:focus, textarea:focus { border-color: var(--primary); }
     textarea { min-height: 92px; resize: vertical; line-height: 1.4; }
     .hint { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
+
+    .duration-banner {
+      margin-top: 10px; padding: 9px 12px; border-radius: 9px;
+      background: var(--bg); border: 1px solid var(--border);
+      font-size: 0.82rem; color: var(--muted); display: flex; align-items: center; gap: 8px;
+    }
+    .duration-banner.ready {
+      background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); color: #a7f3d0;
+    }
+
+    /* Checkbox Ajuste de Volumen */
+    .volume-check-box {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .volume-check-box.checked {
+      background: var(--blue-bg); border-color: var(--primary);
+    }
+    .volume-check-box input[type="checkbox"] {
+      width: 22px; height: 22px; margin-top: 2px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0;
+    }
+    .volume-check-text strong { display: block; font-size: 0.95rem; color: var(--text); margin-bottom: 3px; }
+    .volume-check-text span { font-size: 0.78rem; color: var(--muted); line-height: 1.35; display: block; }
 
     /* Photo picker */
     .photo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
@@ -190,13 +276,9 @@
       max-width: 100%; max-height: 260px; border-radius: 8px; object-fit: contain; cursor: zoom-in;
     }
     .photo-placeholder { font-size: 0.8rem; color: var(--muted); }
-    .photo-toolbar {
-      display: flex; gap: 8px; margin-top: 10px; width: 100%; justify-content: center;
-    }
+    .photo-toolbar { display: flex; gap: 8px; margin-top: 10px; width: 100%; justify-content: center; }
 
-    .form-footer {
-      display: flex; flex-direction: column; gap: 10px; margin-top: 8px;
-    }
+    .form-footer { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
     .btn-save { padding: 14px; font-size: 1rem; width: 100%; }
     .last-update { text-align: center; font-size: 0.78rem; color: var(--muted); }
 
@@ -219,16 +301,18 @@
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* Spinner */
     .spinner {
       width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3);
       border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 520px) {
+    @media (max-width: 640px) {
+      .controls { position: static; padding-top: 0; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
       .bus-grid { grid-template-columns: repeat(2, 1fr); }
-      .controls { top: 82px; }
     }
   </style>
 </head>
@@ -252,7 +336,7 @@
 
   <main class="container">
     <div class="notice" id="localNotice">
-      ⚠️ <strong>Modo Local de prueba:</strong> Pega la URL de tu Google Apps Script en la constante <code>SCRIPT_URL</code> del código para activar la sincronización en la nube entre dispositivos.
+      ⚠️ <strong>Modo Local de prueba:</strong> Pega la URL de tu Google Apps Script en la constante <code>SCRIPT_URL</code> para activar la sincronización en la nube.
     </div>
 
     <!-- VISTA PRINCIPAL: LISTA DE 126 BUSES -->
@@ -263,8 +347,14 @@
           <span id="progressText">0 / 126 completados (0%)</span>
         </div>
         <div class="progress-track">
+          <div class="progress-vol" id="barVol" style="width: 0%"></div>
           <div class="progress-done" id="barDone" style="width: 0%"></div>
           <div class="progress-prog" id="barProg" style="width: 0%"></div>
+        </div>
+        <div class="progress-legend">
+          <span class="legend-item"><span class="legend-dot blue"></span>Ajuste volumen: <strong id="legVol">0</strong> (<span id="legVolPct">0%</span>)</span>
+          <span class="legend-item"><span class="legend-dot green"></span>Completados: <strong id="legComp">0</strong></span>
+          <span class="legend-item"><span class="legend-dot amber"></span>En proceso: <strong id="legProc">0</strong></span>
         </div>
       </div>
 
@@ -273,11 +363,33 @@
           <input type="text" id="searchInput" placeholder="Buscar bus (ej. 7045, 45 o Z66-7045)..." autocomplete="off" />
           <button class="clear-search" id="clearSearch" aria-label="Limpiar búsqueda">&times;</button>
         </div>
+
         <div class="filters">
           <button class="filter-pill active" data-filter="todos">Todos <span id="cntTodos">(126)</span></button>
           <button class="filter-pill" data-filter="pendiente">Pendientes <span id="cntPend">(126)</span></button>
           <button class="filter-pill" data-filter="en_proceso">En proceso <span id="cntProc">(0)</span></button>
           <button class="filter-pill" data-filter="completado">Completados <span id="cntComp">(0)</span></button>
+        </div>
+
+        <div class="advanced-filters">
+          <div class="filter-group">
+            <span class="filter-group-label">Volumen:</span>
+            <button type="button" class="vol-pill active" data-vol="todos">Todos</button>
+            <button type="button" class="vol-pill" data-vol="con">🔊 Con ajuste <span id="cntVolCon">(0)</span></button>
+            <button type="button" class="vol-pill" data-vol="sin">Sin ajuste <span id="cntVolSin">(126)</span></button>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-group-label">Fecha:</span>
+            <input type="date" id="filterDate" class="date-filter-input" title="Filtrar por fecha de intervención" />
+            <button type="button" class="btn btn-sm btn-today-filter" id="btnFilterToday" onclick="toggleTodayFilter()">📅 Hoy</button>
+            <button type="button" class="btn btn-sm" id="btnClearDate" onclick="clearDateFilter()" style="display:none;" title="Quitar filtro de fecha">✕</button>
+          </div>
+        </div>
+
+        <div class="active-results-bar" id="activeResultsBar">
+          <span id="resultsCountText">Mostrando 126 buses</span>
+          <button type="button" class="btn btn-sm" onclick="resetAllFilters()">Limpiar filtros</button>
         </div>
       </div>
 
@@ -294,17 +406,27 @@
         </div>
       </div>
 
-      <!-- RECEPCIÓN / INICIO -->
+      <!-- 1. RECEPCIÓN / INICIO -->
       <div class="section-card">
         <div class="section-title">
           <span>1. Estado Inicial (Recepción)</span>
         </div>
 
-        <div class="field">
-          <label for="inputFecha">Fecha de la intervención</label>
-          <div class="input-row">
-            <input type="date" id="inputFecha" />
-            <button type="button" class="btn btn-sm" onclick="setToday()">Hoy</button>
+        <div class="two-col">
+          <div class="field" style="margin-bottom:0;">
+            <label for="inputFecha">Fecha de la intervención</label>
+            <div class="input-row">
+              <input type="date" id="inputFecha" />
+              <button type="button" class="btn btn-sm" onclick="setToday()">Hoy</button>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:0;">
+            <label for="inputHoraInicio">Hora de inicio</label>
+            <div class="input-row">
+              <input type="time" id="inputHoraInicio" />
+              <button type="button" class="btn btn-sm" onclick="setNowStartTime()">Ahora</button>
+            </div>
           </div>
         </div>
 
@@ -328,7 +450,7 @@
         </div>
       </div>
 
-      <!-- CIERRE / FINALIZACIÓN -->
+      <!-- 2. CIERRE / FINALIZACIÓN -->
       <div class="section-card">
         <div class="section-title">
           <span>2. Cierre e Inspección Final</span>
@@ -338,9 +460,12 @@
           <label for="inputHoraFin">Hora de finalización</label>
           <div class="input-row">
             <input type="time" id="inputHoraFin" />
-            <button type="button" class="btn btn-sm" onclick="setNowTime()">Ahora</button>
+            <button type="button" class="btn btn-sm" onclick="setNowEndTime()">Ahora</button>
           </div>
           <p class="hint">Al registrar la hora de finalización el bus pasa automáticamente a <strong>Completado</strong>.</p>
+          <div class="duration-banner" id="durationBanner">
+            ⏱️ Ingresa hora de inicio y hora de finalización para calcular el tiempo de ejecución.
+          </div>
         </div>
 
         <div class="field">
@@ -361,6 +486,20 @@
             <span class="photo-placeholder">Sin foto final cargada</span>
           </div>
         </div>
+      </div>
+
+      <!-- 3. AJUSTE DE VOLUMEN (INDEPENDIENTE) -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>3. Ajuste de Volumen</span>
+        </div>
+        <label class="volume-check-box" id="volumeCheckBox" for="inputAjusteVolumen">
+          <input type="checkbox" id="inputAjusteVolumen" onchange="updateVolumeBoxUI()" />
+          <div class="volume-check-text">
+            <strong>🔊 Ajuste de Volumen realizado</strong>
+            <span>Campo independiente del estado de finalización. Al marcarlo, suma al progreso azul de ajuste de volumen en el panel principal.</span>
+          </div>
+        </label>
       </div>
 
       <div class="form-footer">
@@ -385,19 +524,20 @@
 
   <script>
     // =========================================================================
-    // CONFIGURACIÓN: Pega aquí la URL de tu aplicación web de Google Apps Script
+    // CONFIGURACIÓN: Pega aquí tu MISMA URL de Google Apps Script
     // =========================================================================
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpBq_gZv1SJA--4RgrJXIule-4WKllMmneYVwMt2667-5_XJPYD_rczzI_HXs2UJxEJw/exec';
+    const SCRIPT_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
 
-    const STORAGE_KEY = 'sirci_audio_buses_cache_v1';
+    const STORAGE_KEY = 'sirci_audio_buses_cache_v2';
     const BUSES = Array.from({ length: 126 }, (_, i) => `Z66-${7001 + i}`);
 
     let records = {};
     let currentFilter = 'todos';
+    let currentVolFilter = 'todos';
+    let currentDateFilter = '';
     let currentSearch = '';
     let activeBus = null;
 
-    // Estado temporal de fotos mientras se edita un bus
     let draftPhotos = {
       inicialBase64: null,
       borrarInicial: false,
@@ -408,6 +548,34 @@
     const isCloudConfigured = () => SCRIPT_URL && SCRIPT_URL.startsWith('https://script.google.com/');
 
     // ---------- Utilidades ----------
+    function getLocalTodayISO() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function getCurrentHHMM() {
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function calcDuration(horaInicio, horaFin) {
+      if (!horaInicio || !horaFin) return '';
+      const p1 = horaInicio.split(':').map(Number);
+      const p2 = horaFin.split(':').map(Number);
+      if (p1.length < 2 || p2.length < 2 || isNaN(p1[0]) || isNaN(p1[1]) || isNaN(p2[0]) || isNaN(p2[1])) {
+        return '';
+      }
+      let diff = (p2[0] * 60 + p2[1]) - (p1[0] * 60 + p1[1]);
+      if (diff < 0) diff += 1440;
+      const h = Math.floor(diff / 60);
+      const m = diff % 60;
+      if (h === 0) return `${m} min`;
+      return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    }
+
     function showToast(msg, ms = 2800) {
       const el = document.getElementById('toast');
       el.textContent = msg;
@@ -436,6 +604,7 @@
       if ((rec.horaFin || '').trim()) return 'completado';
       if (
         (rec.fecha || '').trim() ||
+        (rec.horaInicio || '').trim() ||
         (rec.descInicial || '').trim() ||
         (rec.fotoInicialId || '').trim() ||
         (rec.fotoInicialLocal || '').trim() ||
@@ -460,7 +629,7 @@
 
     function loadCache() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('sirci_audio_buses_cache_v1');
         if (raw) records = JSON.parse(raw) || {};
       } catch (_) { records = {}; }
     }
@@ -501,57 +670,98 @@
 
     // ---------- Render lista principal ----------
     function renderList() {
-      let cPend = 0, cProc = 0, cComp = 0;
+      let cPend = 0, cProc = 0, cComp = 0, cVol = 0;
 
       const items = BUSES.map(bus => {
         const rec = records[bus] || {};
         const st = computeStatus(rec);
+        const vol = Boolean(rec.ajusteVolumen);
         if (st === 'completado') cComp++;
         else if (st === 'en_proceso') cProc++;
         else cPend++;
-        return { bus, rec, st };
+        if (vol) cVol++;
+        return { bus, rec, st, vol };
       });
 
-      // Actualizar contadores y barra
+      // Contadores globales
       document.getElementById('cntTodos').textContent = `(${BUSES.length})`;
       document.getElementById('cntPend').textContent = `(${cPend})`;
       document.getElementById('cntProc').textContent = `(${cProc})`;
       document.getElementById('cntComp').textContent = `(${cComp})`;
+      document.getElementById('cntVolCon').textContent = `(${cVol})`;
+      document.getElementById('cntVolSin').textContent = `(${BUSES.length - cVol})`;
 
+      // Barra de progreso (verde = completado, azul = ajuste de volumen encima)
       const pctDone = Math.round((cComp / BUSES.length) * 100);
       const pctProg = Math.round((cProc / BUSES.length) * 100);
-      document.getElementById('progressText').textContent = `${cComp} / ${BUSES.length} completados (${pctDone}%)`;
-      document.getElementById('barDone').style.width = pctDone + '%';
-      document.getElementById('barProg').style.width = pctProg + '%';
+      const pctVol = Math.round((cVol / BUSES.length) * 100);
 
-      // Filtrar
+      document.getElementById('progressText').textContent = `${cComp} / ${BUSES.length} completados (${pctDone}%)`;
+      document.getElementById('barDone').style.width = ((cComp / BUSES.length) * 100) + '%';
+      document.getElementById('barProg').style.width = ((cProc / BUSES.length) * 100) + '%';
+      document.getElementById('barVol').style.width = ((cVol / BUSES.length) * 100) + '%';
+
+      document.getElementById('legVol').textContent = cVol;
+      document.getElementById('legVolPct').textContent = pctVol + '%';
+      document.getElementById('legComp').textContent = cComp;
+      document.getElementById('legProc').textContent = cProc;
+
+      // Estado visual del filtro de fecha
+      const todayISO = getLocalTodayISO();
+      document.getElementById('btnFilterToday').classList.toggle('active', currentDateFilter === todayISO);
+      document.getElementById('btnClearDate').style.display = currentDateFilter ? 'inline-flex' : 'none';
+
+      // Aplicar todos los filtros combinados
       const q = currentSearch.trim().toLowerCase();
-      const filtered = items.filter(({ bus, st }) => {
+      const filtered = items.filter(({ bus, rec, st, vol }) => {
         if (currentFilter !== 'todos' && st !== currentFilter) return false;
+        if (currentVolFilter === 'con' && !vol) return false;
+        if (currentVolFilter === 'sin' && vol) return false;
+        if (currentDateFilter && (rec.fecha || '').trim() !== currentDateFilter) return false;
         if (q && !bus.toLowerCase().includes(q)) return false;
         return true;
       });
 
+      const hasAnyFilter = currentFilter !== 'todos' || currentVolFilter !== 'todos' || Boolean(currentDateFilter) || Boolean(q);
+      const bar = document.getElementById('activeResultsBar');
+      bar.style.display = hasAnyFilter ? 'flex' : 'none';
+      document.getElementById('resultsCountText').textContent =
+        `Mostrando ${filtered.length} de ${BUSES.length} buses` + (currentDateFilter ? ` (Fecha: ${currentDateFilter})` : '');
+
       const grid = document.getElementById('busGrid');
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="empty-state">No se encontraron buses con ese filtro o búsqueda.</div>`;
+        grid.innerHTML = `<div class="empty-state">No se encontraron buses con los filtros seleccionados.</div>`;
         return;
       }
 
-      grid.innerHTML = filtered.map(({ bus, rec, st }) => {
+      grid.innerHTML = filtered.map(({ bus, rec, st, vol }) => {
         const hasIniPhoto = Boolean(rec.fotoInicialId || rec.fotoInicialLocal);
         const hasFinPhoto = Boolean(rec.fotoFinalId || rec.fotoFinalLocal);
+        const dur = rec.tiempoEjecucion || calcDuration(rec.horaInicio, rec.horaFin);
+
+        let timeLine = 'Sin iniciar';
+        if (rec.horaInicio && rec.horaFin) {
+          timeLine = `${rec.horaInicio} → ${rec.horaFin}`;
+        } else if (rec.horaFin) {
+          timeLine = `Fin: ${rec.horaFin}`;
+        } else if (rec.horaInicio) {
+          timeLine = `Inicio: ${rec.horaInicio}`;
+        } else if (st === 'en_proceso') {
+          timeLine = 'Pendiente cierre';
+        }
+
         return `
-          <div class="bus-card ${st}" onclick="openBus('${bus}')">
+          <div class="bus-card ${st} ${vol ? 'has-volume' : ''}" onclick="openBus('${bus}')">
             <div class="bus-card-top">
               <span class="bus-id">${bus}</span>
               <span class="badge ${st}">${statusLabel(st)}</span>
             </div>
             <div class="bus-meta">
               <span>📅 ${rec.fecha || 'Sin fecha'}</span>
-              <span>🕒 ${rec.horaFin ? 'Fin: ' + rec.horaFin : (st === 'en_proceso' ? 'Pendiente cierre' : 'Sin iniciar')}</span>
-              ${(hasIniPhoto || hasFinPhoto) ? `
+              <span>🕒 ${timeLine} ${dur ? `<span class="dur-tag">(${dur})</span>` : ''}</span>
+              ${(hasIniPhoto || hasFinPhoto || vol) ? `
                 <div class="photo-tags">
+                  ${vol ? '<span class="vol-tag">🔊 Vol. OK</span>' : ''}
                   ${hasIniPhoto ? '<span class="photo-tag">📷 Inicial</span>' : ''}
                   ${hasFinPhoto ? '<span class="photo-tag">📷 Final</span>' : ''}
                 </div>` : ''}
@@ -559,6 +769,33 @@
           </div>
         `;
       }).join('');
+    }
+
+    // ---------- Controles de filtro ----------
+    function toggleTodayFilter() {
+      const today = getLocalTodayISO();
+      currentDateFilter = (currentDateFilter === today) ? '' : today;
+      document.getElementById('filterDate').value = currentDateFilter;
+      renderList();
+    }
+
+    function clearDateFilter() {
+      currentDateFilter = '';
+      document.getElementById('filterDate').value = '';
+      renderList();
+    }
+
+    function resetAllFilters() {
+      currentFilter = 'todos';
+      currentVolFilter = 'todos';
+      currentDateFilter = '';
+      currentSearch = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearch').style.display = 'none';
+      document.getElementById('filterDate').value = '';
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.toggle('active', p.dataset.filter === 'todos'));
+      document.querySelectorAll('.vol-pill').forEach(p => p.classList.toggle('active', p.dataset.vol === 'todos'));
+      renderList();
     }
 
     // ---------- Formulario de Bus ----------
@@ -569,15 +806,20 @@
 
       document.getElementById('formBusTitle').textContent = bus;
       document.getElementById('inputFecha').value = rec.fecha || '';
+      document.getElementById('inputHoraInicio').value = rec.horaInicio || '';
       document.getElementById('inputDescInicial').value = rec.descInicial || '';
       document.getElementById('inputHoraFin').value = rec.horaFin || '';
       document.getElementById('inputDescFinal').value = rec.descFinal || '';
+      document.getElementById('inputAjusteVolumen').checked = Boolean(rec.ajusteVolumen);
+
       document.getElementById('lastUpdateText').textContent = rec.ultimaActualizacion
         ? `Última actualización: ${rec.ultimaActualizacion}`
         : 'Sin registros previos';
 
       renderPhotoPreview('inicial');
       renderPhotoPreview('final');
+      updateVolumeBoxUI();
+      updateDurationBanner();
       updateLiveFormBadge();
 
       document.getElementById('listView').style.display = 'none';
@@ -592,10 +834,31 @@
       renderList();
     }
 
+    function updateVolumeBoxUI() {
+      const checked = document.getElementById('inputAjusteVolumen').checked;
+      document.getElementById('volumeCheckBox').classList.toggle('checked', checked);
+    }
+
+    function updateDurationBanner() {
+      const hIni = document.getElementById('inputHoraInicio').value;
+      const hFin = document.getElementById('inputHoraFin').value;
+      const dur = calcDuration(hIni, hFin);
+      const banner = document.getElementById('durationBanner');
+
+      if (dur) {
+        banner.classList.add('ready');
+        banner.innerHTML = `⏱️ Tiempo de ejecución calculado: <strong>${dur}</strong>`;
+      } else {
+        banner.classList.remove('ready');
+        banner.textContent = '⏱️ Ingresa hora de inicio y hora de finalización para calcular el tiempo de ejecución.';
+      }
+    }
+
     function updateLiveFormBadge() {
       const rec = records[activeBus] || {};
       const simulated = {
         fecha: document.getElementById('inputFecha').value,
+        horaInicio: document.getElementById('inputHoraInicio').value,
         descInicial: document.getElementById('inputDescInicial').value,
         horaFin: document.getElementById('inputHoraFin').value,
         descFinal: document.getElementById('inputDescFinal').value,
@@ -609,19 +872,19 @@
     }
 
     function setToday() {
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      document.getElementById('inputFecha').value = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('inputFecha').value = getLocalTodayISO();
       updateLiveFormBadge();
     }
 
-    function setNowTime() {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mi = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('inputHoraFin').value = `${hh}:${mi}`;
+    function setNowStartTime() {
+      document.getElementById('inputHoraInicio').value = getCurrentHHMM();
+      updateDurationBanner();
+      updateLiveFormBadge();
+    }
+
+    function setNowEndTime() {
+      document.getElementById('inputHoraFin').value = getCurrentHHMM();
+      updateDurationBanner();
       updateLiveFormBadge();
     }
 
@@ -764,25 +1027,29 @@
       const payload = {
         bus: activeBus,
         fecha: document.getElementById('inputFecha').value,
+        horaInicio: document.getElementById('inputHoraInicio').value,
         descInicial: document.getElementById('inputDescInicial').value.trim(),
         horaFin: document.getElementById('inputHoraFin').value,
         descFinal: document.getElementById('inputDescFinal').value.trim(),
+        ajusteVolumen: document.getElementById('inputAjusteVolumen').checked,
         fotoInicialBase64: draftPhotos.inicialBase64,
         borrarFotoInicial: draftPhotos.borrarInicial,
         fotoFinalBase64: draftPhotos.finalBase64,
         borrarFotoFinal: draftPhotos.borrarFinal
       };
 
-      // Modo Local si aún no se pega la URL de Apps Script
       if (!isCloudConfigured()) {
         const prev = records[activeBus] || {};
         const nowStr = new Date().toLocaleString('es-CO');
         const newRec = {
           bus: activeBus,
           fecha: payload.fecha,
+          horaInicio: payload.horaInicio,
           descInicial: payload.descInicial,
           horaFin: payload.horaFin,
           descFinal: payload.descFinal,
+          tiempoEjecucion: calcDuration(payload.horaInicio, payload.horaFin),
+          ajusteVolumen: payload.ajusteVolumen,
           fotoInicialLocal: payload.borrarFotoInicial ? '' : (payload.fotoInicialBase64 || prev.fotoInicialLocal || ''),
           fotoFinalLocal: payload.borrarFotoFinal ? '' : (payload.fotoFinalBase64 || prev.fotoFinalLocal || ''),
           ultimaActualizacion: nowStr + ' (Local)'
@@ -797,7 +1064,6 @@
         return;
       }
 
-      // Guardado en Google Apps Script (sin preflight CORS usando text/plain)
       try {
         const res = await fetch(SCRIPT_URL, {
           method: 'POST',
@@ -824,7 +1090,7 @@
       }
     }
 
-    // ---------- Eventos de búsqueda, filtros e inicialización ----------
+    // ---------- Eventos e inicialización ----------
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
 
@@ -851,18 +1117,33 @@
       });
     });
 
-    ['inputFecha', 'inputDescInicial', 'inputHoraFin', 'inputDescFinal'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateLiveFormBadge);
+    document.querySelectorAll('.vol-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.vol-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentVolFilter = pill.dataset.vol;
+        renderList();
+      });
     });
 
-    // Al volver a la pestaña en el celular/PC, sincroniza automáticamente si estás en la lista
+    document.getElementById('filterDate').addEventListener('change', (e) => {
+      currentDateFilter = e.target.value;
+      renderList();
+    });
+
+    ['inputFecha', 'inputHoraInicio', 'inputDescInicial', 'inputHoraFin', 'inputDescFinal'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        updateDurationBanner();
+        updateLiveFormBadge();
+      });
+    });
+
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && !activeBus && isCloudConfigured()) {
         syncFromCloud(false);
       }
     });
 
-    // Arranque
     loadCache();
     renderList();
     syncFromCloud(false);
